@@ -1,28 +1,111 @@
+// Import necessary dependencies and components
+import { useEffect, useState } from "react";
 import { View, Text, StyleSheet, Image } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { tracks } from "../assets/data/tracks";
 import { usePlayerContext } from "@/providers/PlayerProvider";
-const track = tracks[5];
+import { AVPlaybackStatus, Audio } from "expo-av";
+import { Sound } from "expo-av/build/Audio";
 
 const Player = () => {
+  // State variables to manage audio playback and player UI
+  const [sound, setSound] = useState<Sound>();
+  const [isPlaying, setIsPlaying] = useState(false);
+
+  // Accessing the current track from the player context
   const { track } = usePlayerContext();
 
+  // Effect to handle changes in the track
+  useEffect(() => {
+    // If a track is present, play it
+    if (track) {
+      playTrack();
+    } else {
+      // Unload sound when no track is present
+      if (sound) {
+        sound.unloadAsync();
+      }
+    }
+  }, [track]);
+
+  // Effect for cleaning up resources when the component unmounts or when sound changes
+  useEffect(() => {
+    return sound ? sound.unloadAsync : undefined;
+  }, [sound]);
+
+  // Function to play the selected track
+  const playTrack = async () => {
+    // Unload the existing sound (if any)
+    if (sound) {
+      await sound.unloadAsync();
+    }
+
+    // Check if the selected track has a preview URL
+    if (!track?.preview_url) {
+      return;
+    }
+
+    // Create a new audio player for the track
+    const { sound: audioPlayer } = await Audio.Sound.createAsync({
+      uri: track.preview_url,
+    });
+
+    // Set the new audio player in the state
+    setSound(audioPlayer);
+
+    // Set up a callback for playback status updates
+    audioPlayer.setOnPlaybackStatusUpdate(onPlaybackStatusUpdate);
+
+    // Start playing the track
+    await audioPlayer.playAsync();
+  };
+
+  // Callback for handling updates to the playback status
+  const onPlaybackStatusUpdate = (status: AVPlaybackStatus) => {
+    console.log(status);
+
+    // Check if the audio is loaded
+    if (status.isLoaded) {
+      // Update the state with the current playback status
+      setIsPlaying(status.isPlaying);
+    }
+  };
+
+  // Function to handle play/pause button press
+  const onPlayPause = async () => {
+    // Check if a sound is present
+    if (!sound) {
+      return;
+    }
+
+    // Toggle play/pause based on the current state
+    if (isPlaying) {
+      await sound.pauseAsync();
+    } else {
+      await sound.playAsync();
+    }
+  };
+
+  // Render the player UI
+  // If no track is present, do not render the player
   if (!track) {
     return null;
   }
 
-  const image = track.album.images?.[0];
-
   return (
     <View style={styles.container}>
       <View style={styles.player}>
-        {image && <Image source={{ uri: image.url }} style={styles.image} />}
+        {/* Display the album image if available */}
+        {track.album.images?.[0] && (
+          <Image source={{ uri: track.album.images[0].url }} style={styles.image} />
+        )}
 
         <View style={{ flex: 1 }}>
+          {/* Display the track name and artist */}
           <Text style={styles.title}>{track.name}</Text>
           <Text style={styles.subtitle}>{track.artists[0]?.name}</Text>
         </View>
 
+        {/* Display a heart icon and play/pause button */}
         <Ionicons
           name={"heart-outline"}
           size={20}
@@ -30,16 +113,18 @@ const Player = () => {
           style={{ marginHorizontal: 10 }}
         />
         <Ionicons
-          disabled={!track?.preview_url}
-          name={"play"}
+          onPress={onPlayPause}
+          disabled={!track.preview_url}
+          name={isPlaying ? "pause" : "play"}
           size={22}
-          color={track?.preview_url ? "white" : "gray"}
+          color={track.preview_url ? "white" : "gray"}
         />
       </View>
     </View>
   );
 };
 
+// Styles for the player component
 const styles = StyleSheet.create({
   container: {
     position: "absolute",
@@ -72,4 +157,5 @@ const styles = StyleSheet.create({
   },
 });
 
+// Export the Player component
 export default Player;
