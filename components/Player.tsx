@@ -96,7 +96,10 @@ const Player = () => {
       <View style={styles.player}>
         {/* Display the album image if available */}
         {track.album.images?.[0] && (
-          <Image source={{ uri: track.album.images[0].url }} style={styles.image} />
+          <Image
+            source={{ uri: track.album.images[0].url }}
+            style={styles.image}
+          />
         )}
 
         <View style={{ flex: 1 }}>
@@ -131,10 +134,10 @@ const styles = StyleSheet.create({
     width: "100%",
     top: -80,
     height: 80,
-    padding: 10,
+    padding: 8,
   },
   player: {
-    backgroundColor: "#222",
+    backgroundColor: "#555",
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
