@@ -1,3 +1,5 @@
+// Import necessary components and libraries from React Native
+import React, { useState } from "react";
 import {
   FlatList,
   TextInput,
@@ -9,9 +11,9 @@ import {
 import TrackListItem from "@/components/TrackListItem";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { FontAwesome } from "@expo/vector-icons";
-import { useState } from "react";
 import { gql, useQuery } from "@apollo/client";
 
+// GraphQL query for searching tracks
 const query = gql`
   query MyQuery($q: String) {
     search(q: $q) {
@@ -39,19 +41,23 @@ const query = gql`
   }
 `;
 
+// Main functional component for the Search Screen
 export default function SearchScreen() {
+  // State for managing the search input
   const [search, setSearch] = useState("");
 
+  // Use GraphQL query to fetch data based on the search term
   const { data, loading, error } = useQuery(query, {
     variables: { q: search },
   });
 
+  // Extract tracks from the fetched data
   const tracks = data?.search?.tracks?.items || [];
 
   return (
     <SafeAreaView>
+      {/* Header section with search input and cancel button */}
       <View style={styles.header}>
-        {}
         <FontAwesome name="search" size={16} color="gray" />
         <TextInput
           value={search}
@@ -65,9 +71,12 @@ export default function SearchScreen() {
         </Text>
       </View>
 
+      {/* Display loading indicator while fetching data */}
       {loading && <ActivityIndicator />}
+      {/* Display error message if fetching data fails */}
       {error && <Text>Failed to fetch tracks</Text>}
-      
+
+      {/* Display the list of tracks using FlatList */}
       <FlatList
         data={tracks}
         renderItem={({ item }) => <TrackListItem track={item} />}
@@ -77,6 +86,7 @@ export default function SearchScreen() {
   );
 }
 
+// Styles for the components in the Search Screen
 const styles = StyleSheet.create({
   header: {
     flexDirection: "row",

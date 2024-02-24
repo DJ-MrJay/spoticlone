@@ -1,4 +1,5 @@
 // Import necessary dependencies and components
+import React from "react";
 import { useEffect, useState } from "react";
 import { View, Text, StyleSheet, Image } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
@@ -41,6 +42,7 @@ const Player = () => {
 
     // Check if the selected track has a preview URL
     if (!track?.preview_url) {
+      // Change to play icon if no preview is available
       return;
     }
 
@@ -118,7 +120,7 @@ const Player = () => {
         <Ionicons
           onPress={onPlayPause}
           disabled={!track.preview_url}
-          name={isPlaying ? "pause" : "play"}
+          name={!track.preview_url ? "play" : isPlaying ? "pause" : "play"}
           size={22}
           color={track.preview_url ? "white" : "gray"}
         />
