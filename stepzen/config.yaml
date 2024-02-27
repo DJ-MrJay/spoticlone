@@ -1,5 +1,8 @@
 configurationset:
   - configuration:
+      name: postgresql_config
+      uri: postgresql://ep-aged-band-a5zibn7p.us-east-2.aws.neon.tech/spotidb?user=DJ-MrJay&password=q26GlJTIrhHM
+  - configuration:
       name: auth_config
       client_id: 67524da833cb451b8e66d8061f22de58
       client_secret: 45af43e994a44a9e84a87677642bc78c

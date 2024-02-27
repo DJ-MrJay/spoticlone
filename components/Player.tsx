@@ -1,4 +1,3 @@
-// Import necessary dependencies and components
 import React from "react";
 import { useEffect, useState } from "react";
 import { View, Text, StyleSheet, Image } from "react-native";
@@ -6,80 +5,99 @@ import { Ionicons } from "@expo/vector-icons";
 import { usePlayerContext } from "@/providers/PlayerProvider";
 import { AVPlaybackStatus, Audio } from "expo-av";
 import { Sound } from "expo-av/build/Audio";
+import { gql, useMutation, useQuery } from "@apollo/client";
+
+const insertFavoriteMutation = gql`
+  mutation MyMutation($userId: String!, $trackId: String!) {
+    insertFavorites(trackid: $trackId, userid: $userId) {
+      id
+      trackid
+      userid
+    }
+  }
+`;
+
+const isFavoriteQuery = gql`
+  query MyQuery($trackId: String!, $userId: String!) {
+    favoritesByTrackidAndUserid(trackid: $trackId, userid: $userId) {
+      id
+      trackid
+      userid
+    }
+  }
+`;
+
+const removeFavoriteMutation = gql`
+  mutation MyMutation($trackId: String!, $userId: String!) {
+    deleteFavorites(trackid: $trackId, userid: $userId) {
+      id
+    }
+  }
+`;
 
 const Player = () => {
-  // State variables to manage audio playback and player UI
   const [sound, setSound] = useState<Sound>();
   const [isPlaying, setIsPlaying] = useState(false);
 
-  // Accessing the current track from the player context
   const { track } = usePlayerContext();
 
-  // Effect to handle changes in the track
+  const [insertFavorite] = useMutation(insertFavoriteMutation);
+  const [removeFavorite] = useMutation(removeFavoriteMutation);
+  const { data, refetch } = useQuery(isFavoriteQuery, {
+    variables: { userId: "snoop", trackId: track?.id || "" },
+  });
+
+  console.log(data);
+
+  const isLiked = data?.favoritesByTrackidAndUserid?.length > 0;
+
   useEffect(() => {
-    // If a track is present, play it
     if (track) {
       playTrack();
     } else {
-      // Unload sound when no track is present
       if (sound) {
         sound.unloadAsync();
       }
     }
   }, [track]);
 
-  // Effect for cleaning up resources when the component unmounts or when sound changes
   useEffect(() => {
     return sound ? sound.unloadAsync : undefined;
   }, [sound]);
 
-  // Function to play the selected track
   const playTrack = async () => {
-    // Unload the existing sound (if any)
     if (sound) {
       await sound.unloadAsync();
     }
 
-    // Check if the selected track has a preview URL
     if (!track?.preview_url) {
-      // Change to play icon if no preview is available
       return;
     }
 
-    // Create a new audio player for the track
     const { sound: audioPlayer } = await Audio.Sound.createAsync({
       uri: track.preview_url,
     });
 
-    // Set the new audio player in the state
     setSound(audioPlayer);
 
-    // Set up a callback for playback status updates
     audioPlayer.setOnPlaybackStatusUpdate(onPlaybackStatusUpdate);
 
-    // Start playing the track
     await audioPlayer.playAsync();
   };
 
-  // Callback for handling updates to the playback status
   const onPlaybackStatusUpdate = (status: AVPlaybackStatus) => {
     console.log(status);
 
-    // Check if the audio is loaded
     if (status.isLoaded) {
-      // Update the state with the current playback status
       setIsPlaying(status.isPlaying);
     }
   };
 
-  // Function to handle play/pause button press
   const onPlayPause = async () => {
-    // Check if a sound is present
     if (!sound) {
       return;
     }
 
-    // Toggle play/pause based on the current state
     if (isPlaying) {
       await sound.pauseAsync();
     } else {
@@ -87,8 +105,20 @@ const Player = () => {
     }
   };
 
-  // Render the player UI
-  // If no track is present, do not render the player
+  const onLike = async () => {
+    if (!track) return;
+    if (isLiked) {
+      await removeFavorite({
+        variables: { userId: "snoop", trackId: track.id },
+      });
+    } else {
+      await insertFavorite({
+        variables: { userId: "snoop", trackId: track.id },
+      });
+    }
+    refetch();
+  };
+
   if (!track) {
     return null;
   }
@@ -96,7 +126,6 @@ const Player = () => {
   return (
     <View style={styles.container}>
       <View style={styles.player}>
-        {/* Display the album image if available */}
         {track.album.images?.[0] && (
           <Image
             source={{ uri: track.album.images[0].url }}
@@ -105,14 +134,13 @@ const Player = () => {
         )}
 
         <View style={{ flex: 1 }}>
-          {/* Display the track name and artist */}
           <Text style={styles.title}>{track.name}</Text>
           <Text style={styles.subtitle}>{track.artists[0]?.name}</Text>
         </View>
 
-        {/* Display a heart icon and play/pause button */}
         <Ionicons
-          name={"heart-outline"}
+          onPress={onLike}
+          name={isLiked ? "heart" : "heart-outline"}
           size={20}
           color={"white"}
           style={{ marginHorizontal: 10 }}
@@ -129,7 +157,6 @@ const Player = () => {
   );
 };
 
-// Styles for the player component
 const styles = StyleSheet.create({
   container: {
     position: "absolute",
@@ -162,5 +189,4 @@ const styles = StyleSheet.create({
   },
 });
 
-// Export the Player component
 export default Player;

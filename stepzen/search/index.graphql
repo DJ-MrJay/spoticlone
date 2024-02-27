@@ -101,17 +101,11 @@ type Query {
       endpoint: "https://api.spotify.com/v1/search?type=track"
       headers: [{ name: "authorization", value: "Bearer $access_token" }]
     )
-
   search(q: String): SearchResult
     @sequence(
       steps: [
         { query: "getToken" }
-        {
-          query: "_search"
-          arguments: [
-            { name: "q", argument: "q" }
-          ]
-        }
+        { query: "_search", arguments: [{ name: "q", argument: "q" }] }
       ]
     )
 }
