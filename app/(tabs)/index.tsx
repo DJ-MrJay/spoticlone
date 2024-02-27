@@ -33,7 +33,7 @@ const query = gql`
 export default function HomeScreen() {
   // Use Apollo Client's useQuery hook to fetch data
   const { data, loading, error } = useQuery(query, {
-    variables: { genres: "hip-hop" }, // Specify variables for the query
+    variables: { genres: "punk" }, // Specify variables for the query
   });
 
   // Show loading indicator while data is being fetched

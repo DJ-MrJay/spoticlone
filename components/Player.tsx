@@ -1,5 +1,5 @@
-import React from "react";
-import { useEffect, useState } from "react";
+// Import necessary modules and libraries
+import React, { useEffect, useState } from "react";
 import { View, Text, StyleSheet, Image } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { usePlayerContext } from "@/providers/PlayerProvider";
@@ -7,6 +7,7 @@ import { AVPlaybackStatus, Audio } from "expo-av";
 import { Sound } from "expo-av/build/Audio";
 import { gql, useMutation, useQuery } from "@apollo/client";
 
+// GraphQL mutations and queries
 const insertFavoriteMutation = gql`
   mutation MyMutation($userId: String!, $trackId: String!) {
     insertFavorites(trackid: $trackId, userid: $userId) {
@@ -35,22 +36,26 @@ const removeFavoriteMutation = gql`
   }
 `;
 
+// Player component definition
 const Player = () => {
+  // State variables for audio playback
   const [sound, setSound] = useState<Sound>();
   const [isPlaying, setIsPlaying] = useState(false);
 
+  // Context hook to access player information
   const { track } = usePlayerContext();
 
+  // GraphQL mutation and query hooks
   const [insertFavorite] = useMutation(insertFavoriteMutation);
   const [removeFavorite] = useMutation(removeFavoriteMutation);
   const { data, refetch } = useQuery(isFavoriteQuery, {
     variables: { userId: "snoop", trackId: track?.id || "" },
   });
 
-  console.log(data);
-
+  // Check if the track is liked
   const isLiked = data?.favoritesByTrackidAndUserid?.length > 0;
 
+  // Play the track when the component mounts or when the track changes
   useEffect(() => {
     if (track) {
       playTrack();
@@ -61,10 +66,12 @@ const Player = () => {
     }
   }, [track]);
 
+  // Unload the audio when the component unmounts
   useEffect(() => {
     return sound ? sound.unloadAsync : undefined;
   }, [sound]);
 
+  // Play the selected track
   const playTrack = async () => {
     if (sound) {
       await sound.unloadAsync();
@@ -85,6 +92,7 @@ const Player = () => {
     await audioPlayer.playAsync();
   };
 
+  // Handle playback status updates
   const onPlaybackStatusUpdate = (status: AVPlaybackStatus) => {
     console.log(status);
 
@@ -93,6 +101,7 @@ const Player = () => {
     }
   };
 
+  // Handle play/pause button click
   const onPlayPause = async () => {
     if (!sound) {
       return;
@@ -105,6 +114,7 @@ const Player = () => {
     }
   };
 
+  // Handle like button click
   const onLike = async () => {
     if (!track) return;
     if (isLiked) {
@@ -119,6 +129,7 @@ const Player = () => {
     refetch();
   };
 
+  // Render the player UI
   if (!track) {
     return null;
   }
@@ -138,6 +149,7 @@ const Player = () => {
           <Text style={styles.subtitle}>{track.artists[0]?.name}</Text>
         </View>
 
+        {/* Like button */}
         <Ionicons
           onPress={onLike}
           name={isLiked ? "heart" : "heart-outline"}
@@ -145,6 +157,8 @@ const Player = () => {
           color={"white"}
           style={{ marginHorizontal: 10 }}
         />
+
+        {/* Play/Pause button */}
         <Ionicons
           onPress={onPlayPause}
           disabled={!track.preview_url}
@@ -157,6 +171,7 @@ const Player = () => {
   );
 };
 
+// Styles for the player UI
 const styles = StyleSheet.create({
   container: {
     position: "absolute",
@@ -189,4 +204,5 @@ const styles = StyleSheet.create({
   },
 });
 
+// Export the Player component as the default export
 export default Player;

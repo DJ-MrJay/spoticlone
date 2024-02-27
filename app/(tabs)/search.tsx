@@ -73,9 +73,7 @@ export default function SearchScreen() {
 
       {/* Display loading indicator while fetching data */}
       {loading && <ActivityIndicator />}
-      {/* Display error message if fetching data fails */}
-      {error && <Text style={{ color: "white" }}>Failed to fetch tracks</Text>}
-
+      
       {/* Display the list of tracks using FlatList */}
       <FlatList
         data={tracks}
